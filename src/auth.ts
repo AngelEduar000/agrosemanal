@@ -1,8 +1,12 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
+import { PrismaAdapter } from "@auth/prisma-adapter";
 import { authConfig } from "@/auth.config";
+import { prisma } from "@/lib/prisma";
+import { verifyPin } from "@/lib/password";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  adapter: PrismaAdapter(prisma),
   ...authConfig,
   providers: [
     Credentials({
@@ -13,26 +17,28 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         pin: { label: "PIN", type: "password" },
       },
       async authorize(credentials) {
-        const authorized = process.env.AUTHORIZED_EMAIL?.toLowerCase().trim();
-        const expectedPin = process.env.LOGIN_PIN?.trim();
         const email = String(credentials?.email ?? "")
           .toLowerCase()
           .trim();
         const pin = String(credentials?.pin ?? "").trim();
 
-        if (!authorized || !expectedPin) {
-          console.error("[auth] Faltan AUTHORIZED_EMAIL o LOGIN_PIN en el servidor");
+        if (!email || !pin) {
           return null;
         }
 
-        if (email !== authorized || pin !== expectedPin) {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user?.password) {
+          return null;
+        }
+
+        if (!verifyPin(pin, user.password)) {
           return null;
         }
 
         return {
-          id: "owner",
-          email: authorized,
-          name: "Agrónomo",
+          id: user.id,
+          email: user.email,
+          name: user.name ?? "Agro Usuario",
         };
       },
     }),

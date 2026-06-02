@@ -1,12 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { WeeklyPlanner } from "@/components/planner/WeeklyPlanner";
+import { getDiaryEntry } from "@/actions/diary";
 import {
   formatDateISO,
-  formatWeekRange,
-  getWeekEnd,
   getWeekKey,
   getWeekStartForKey,
+  getWeekEnd,
 } from "@/lib/dates";
 
 export default async function PlanificadorPage({
@@ -31,15 +31,15 @@ export default async function PlanificadorPage({
   });
 
   const unassigned = orders.filter((o) => !o.plannedDay);
+  const todayDiary = await getDiaryEntry(formatDateISO(new Date()));
 
   return (
     <div className="space-y-8">
       <header>
-        <h1 className="font-display text-4xl font-bold text-agro-900">
-          Planificador semanal
-        </h1>
-        <p className="mt-2 text-xl text-stone-700">
-          Semana del {formatWeekRange(weekStartDate)}. Organice entregas y labores día a día.
+        <p className="text-sm uppercase tracking-[0.32em] text-agro-700">Agenda profesional</p>
+        <h1 className="mt-3 font-display text-5xl font-bold text-agro-900">Calendario de actividades</h1>
+        <p className="mt-4 max-w-3xl text-xl leading-relaxed text-stone-700">
+          Visualiza tu semana con claridad y organiza tus bitácoras desde una vista moderna y profesional.
         </p>
       </header>
 
@@ -48,6 +48,7 @@ export default async function PlanificadorPage({
         weekStartIso={formatDateISO(weekStartDate)}
         orders={orders}
         tasks={tasks}
+        diaryEntry={todayDiary}
         unassignedOrders={unassigned}
       />
     </div>

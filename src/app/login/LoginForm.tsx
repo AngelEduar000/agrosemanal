@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
@@ -8,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 
 const URL_ERROR_MESSAGES: Record<string, string> = {
   Configuration: "Error de configuración en el servidor.",
-  CredentialsSignin: "Correo o PIN incorrectos. Verifique e intente de nuevo.",
+  CredentialsSignin: "Usuario o PIN incorrectos. Verifique e intente de nuevo.",
 };
 
 export function LoginForm({ urlError }: { urlError?: string | null }) {
@@ -38,7 +39,7 @@ export function LoginForm({ urlError }: { urlError?: string | null }) {
       return;
     }
 
-    router.push("/pedidos");
+    router.push("/planificador");
     router.refresh();
   }
 
@@ -53,7 +54,7 @@ export function LoginForm({ urlError }: { urlError?: string | null }) {
         placeholder="su-correo@ejemplo.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        hint="El correo registrado para esta aplicación."
+        hint="Correo registrado para ingresar a tu agenda." 
       />
       <Input
         label="PIN de acceso"
@@ -65,16 +66,18 @@ export function LoginForm({ urlError }: { urlError?: string | null }) {
         placeholder="Su PIN personal"
         value={pin}
         onChange={(e) => setPin(e.target.value)}
-        hint="Clave numérica que configuró en el servidor (no se envía por correo)."
       />
       {error && (
-        <p className="rounded-lg bg-red-50 p-4 text-lg text-red-800" role="alert">
+        <p className="rounded-2xl bg-red-50 p-4 text-base text-red-800" role="alert">
           {error}
         </p>
       )}
       <Button type="submit" fullWidth disabled={loading}>
         {loading ? "Entrando…" : "Entrar a AgroSemanal"}
       </Button>
+      <p className="text-center text-base text-stone-600">
+        ¿No tienes cuenta? <Link href="/register" className="font-semibold text-agro-700 hover:text-agro-800">Regístrate aquí</Link>
+      </p>
     </form>
   );
 }

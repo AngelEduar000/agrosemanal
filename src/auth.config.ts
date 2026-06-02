@@ -1,6 +1,6 @@
 import type { NextAuthConfig } from "next-auth";
 
-const publicPaths = ["/login", "/login/error", "/api/auth"];
+const publicPaths = ["/login", "/login/error", "/register", "/api/auth", "/api/register"];
 
 export const authConfig = {
   pages: {
@@ -21,7 +21,7 @@ export const authConfig = {
       if (isApiCron) return true;
 
       if (isLoggedIn && pathname.startsWith("/login")) {
-        return Response.redirect(new URL("/pedidos", request.nextUrl));
+        return Response.redirect(new URL("/planificador", request.nextUrl));
       }
 
       if (isPublic) return true;

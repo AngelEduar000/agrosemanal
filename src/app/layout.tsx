@@ -16,9 +16,9 @@ const sourceSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: "AgroSemanal — Gestión de pedidos agrícolas",
+  title: "AgroSemanal — Calendario inteligente y planificador",
   description:
-    "Aplicación personal para registrar pedidos, planificar la semana y llevar la bitácora de campo.",
+    "Tu aplicación personal para gestionar la semana con calendario profesional, notas detalladas, bitácoras de campo y recordatorios automáticos.",
 };
 
 export const viewport: Viewport = {

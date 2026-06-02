@@ -13,36 +13,37 @@ export default async function BitacoraPage({
 
   return (
     <div className="space-y-8">
-      <header>
-        <h1 className="font-display text-4xl font-bold text-agro-900">Bitácora diaria</h1>
-        <p className="mt-2 text-xl text-stone-700">
-          Registre cada día lo realizado en campo y en entregas. Puede consultar días
-          anteriores cambiando la fecha en la barra del navegador o usando el selector.
+      <header className="rounded-[32px] border border-white/60 bg-white/80 p-8 shadow-2xl shadow-stone-200/30 backdrop-blur-xl">
+        <p className="text-sm uppercase tracking-[0.32em] text-agro-700">Bitácora agrícola</p>
+        <h1 className="mt-3 font-display text-5xl font-bold text-agro-900">Registra tu día con claridad</h1>
+        <p className="mt-4 max-w-3xl text-xl leading-relaxed text-stone-700">
+          Anota observaciones, tareas completadas y prioridades. El registro diario te ayuda a mantener un seguimiento profesional y preciso.
         </p>
       </header>
 
-      <form method="get" className="rounded-xl border-2 border-stone-200 bg-white p-5">
-        <label className="block text-lg font-semibold" htmlFor="fecha">
-          Ver o editar otro día
-        </label>
-        <div className="mt-2 flex flex-col gap-3 sm:flex-row">
-          <input
-            id="fecha"
-            name="fecha"
-            type="date"
-            defaultValue={dateIso}
-            className="min-h-[3rem] flex-1 rounded-lg border-2 border-stone-300 px-4 text-lg"
-          />
-          <button
-            type="submit"
-            className="min-h-[3rem] rounded-lg bg-agro-700 px-8 text-lg font-semibold text-white hover:bg-agro-800"
-          >
-            Ir a esa fecha
-          </button>
+      <div className="grid gap-6 xl:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-6">
+          <DiaryEditor dateIso={dateIso} initialContent={entry?.content ?? ""} />
         </div>
-      </form>
-
-      <DiaryEditor dateIso={dateIso} initialContent={entry?.content ?? ""} />
+        <aside className="space-y-6 rounded-[32px] border border-stone-200 bg-white/85 p-6 shadow-xl shadow-stone-200/20">
+          <div>
+            <h2 className="text-2xl font-semibold text-agro-900">Navegación rápida</h2>
+            <p className="mt-3 text-sm leading-relaxed text-stone-600">
+              Usa el selector de fecha para revisar bitácoras anteriores y mantener registro de cada jornada.
+            </p>
+          </div>
+          <div className="rounded-3xl bg-agro-50 p-5">
+            <p className="text-sm uppercase tracking-[0.22em] text-stone-600">Fecha activa</p>
+            <p className="mt-3 text-2xl font-semibold text-agro-900">{dateIso}</p>
+          </div>
+          <div className="rounded-3xl border border-stone-200 bg-stone-50 p-5">
+            <h3 className="font-semibold text-agro-900">Consejo</h3>
+            <p className="mt-2 text-sm leading-relaxed text-stone-600">
+              Escribe términos importantes como urgente, entrega o revisión para que el sistema destaque la prioridad de tu bitácora.
+            </p>
+          </div>
+        </aside>
+      </div>
     </div>
   );
 }

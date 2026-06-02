@@ -19,8 +19,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           ref={ref}
           id={inputId}
           className={[
-            "w-full min-h-[3rem] rounded-lg border-2 border-stone-300 bg-white px-4 py-3 text-lg text-stone-900",
-            "placeholder:text-stone-400 focus:border-agro-600 focus:outline-none focus:ring-4 focus:ring-agro-200",
+            "w-full min-h-[3rem] rounded-3xl border border-stone-300 bg-white/85 px-4 py-3 text-lg text-stone-900 shadow-sm shadow-stone-200/20",
+            "placeholder:text-stone-400 focus:border-agro-600 focus:outline-none focus:ring-4 focus:ring-agro-200/70",
             error ? "border-red-600" : "",
             className,
           ].join(" ")}

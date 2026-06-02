@@ -2,7 +2,7 @@
 
 import type { FieldTask, Order } from "@prisma/client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import {
   formatDateISO,
@@ -26,12 +26,14 @@ export function WeeklyPlanner({
   weekStartIso,
   orders,
   tasks,
+  diaryEntry,
   unassignedOrders,
 }: {
   weekKey: string;
   weekStartIso: string;
   orders: Order[];
   tasks: FieldTask[];
+  diaryEntry: { content: string } | null;
   unassignedOrders: Order[];
 }) {
   const router = useRouter();
@@ -72,7 +74,21 @@ export function WeeklyPlanner({
   const todayOrders = ordersForDay(today);
   const todayTasks = tasksForDay(today);
   const todayCount = todayOrders.length + todayTasks.length;
-  const plannedCount = orders.filter((o) => o.plannedDay).length;
+
+  const diaryTone = useMemo(() => {
+    if (!diaryEntry) {
+      return { label: "Sin bitácora hoy", badge: "bg-stone-100 text-stone-700" };
+    }
+
+    const text = diaryEntry.content.toLowerCase();
+    if (text.includes("urgente") || text.includes("crítico") || text.includes("importante") || text.includes("prioridad")) {
+      return { label: "Alta importancia", badge: "bg-red-100 text-red-900" };
+    }
+    if (text.includes("revisión") || text.includes("programa") || text.includes("entrega")) {
+      return { label: "Importante", badge: "bg-amber-100 text-amber-900" };
+    }
+    return { label: "Normal", badge: "bg-emerald-100 text-emerald-900" };
+  }, [diaryEntry]);
 
   useEffect(() => {
     if (todayCount > 0) {
@@ -89,26 +105,20 @@ export function WeeklyPlanner({
       <section className="rounded-3xl bg-gradient-to-r from-agro-800 via-agro-700 to-agro-600 p-8 shadow-2xl text-white">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm uppercase tracking-[0.24em] text-agro-200">Agenda semanal</p>
-            <h2 className="mt-3 text-4xl font-bold">Calendario y notas</h2>
+            <p className="text-sm uppercase tracking-[0.24em] text-agro-200">Agenda profesional</p>
+            <h2 className="mt-3 text-4xl font-bold">Planificador semanal</h2>
             <p className="mt-3 max-w-2xl text-lg text-agro-100/90">
-              Visualiza tus actividades y pedidos asignados por día, agrega notas rápidas y genera un reporte Excel con un clic.
+              Visualiza tus notas y actividades por día, organiza tu semana y exporta tus registros a Excel con un clic.
             </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            <Link
-              href={`/api/export/orders?range=week&week=${weekKey}`}
-              className="inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-center text-lg font-semibold text-white transition hover:bg-white/20"
-            >
-              Exportar pedidos
-            </Link>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-2">
             <Link
               href={`/api/export/tasks?range=week&week=${weekKey}`}
-              className="inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-center text-lg font-semibold text-white transition hover:bg-white/20"
+              className="inline-flex min-h-[3.5rem] items-center justify-center rounded-3xl border border-white/20 bg-white/15 px-5 text-center text-lg font-semibold text-white transition hover:bg-white/25"
             >
-              Exportar notas
+              Descargar Excel
             </Link>
-            <div className="inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-center text-lg font-semibold text-white">
+            <div className="inline-flex min-h-[3.5rem] items-center justify-center rounded-3xl border border-white/20 bg-white/15 px-5 text-center text-lg font-semibold text-white">
               Semana {weekKey}
             </div>
           </div>
@@ -120,19 +130,6 @@ export function WeeklyPlanner({
           <Card title="Alertas para hoy" subtitle={todayAlert} className="border-agro-300 bg-agro-50">
             {todayCount > 0 ? (
               <div className="grid gap-4">
-                {todayOrders.length > 0 && (
-                  <div>
-                    <p className="mb-3 text-lg font-semibold text-agro-800">Pedidos previstos</p>
-                    <ul className="space-y-3">
-                      {todayOrders.map((order) => (
-                        <li key={order.id} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
-                          <p className="font-semibold text-stone-900">{order.clientName} · {order.product}</p>
-                          <p className="mt-1 text-sm text-stone-600">{STATUS_LABELS[order.status]} · {PRIORITY_LABELS[order.priority]}</p>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
                 {todayTasks.length > 0 && (
                   <div>
                     <p className="mb-3 text-lg font-semibold text-agro-800">Notas y labores</p>
@@ -146,15 +143,28 @@ export function WeeklyPlanner({
                     </ul>
                   </div>
                 )}
+                {todayOrders.length > 0 && (
+                  <div>
+                    <p className="mb-3 text-lg font-semibold text-agro-800">Pedidos previstos</p>
+                    <ul className="space-y-3">
+                      {todayOrders.map((order) => (
+                        <li key={order.id} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+                          <p className="font-semibold text-stone-900">{order.clientName} · {order.product}</p>
+                          <p className="mt-1 text-sm text-stone-600">{STATUS_LABELS[order.status]} · {PRIORITY_LABELS[order.priority]}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
             ) : (
               <p className="text-lg text-stone-600">No tienes actividades asignadas para hoy. Revisa la semana y organiza tus tareas.</p>
             )}
           </Card>
 
-          <Card title="Pedidos sin día asignado" subtitle="Mueve estos pedidos al calendario para asegurarte de que se entregan a tiempo." className="border-yellow-300 bg-yellow-50">
+          <Card title="Actividades sin fecha" subtitle="Añade estas notas al calendario para organizarlas mejor." className="border-yellow-300 bg-yellow-50">
             {unassignedOrders.length === 0 ? (
-              <p className="text-lg text-stone-600">Todos los pedidos ya tienen día asignado. Excelente.</p>
+              <p className="text-lg text-stone-600">No hay actividades sin fecha. Todo está en el calendario.</p>
             ) : (
               <ul className="space-y-4">
                 {unassignedOrders.map((order) => (
@@ -170,7 +180,7 @@ export function WeeklyPlanner({
                           defaultValue=""
                           onChange={(e) => e.target.value && assign(order.id, e.target.value)}
                         >
-                          <option value="">Seleccionar día</option>
+                          <option value="">Asignar a un día</option>
                           {days.map((day) => (
                             <option key={formatDateISO(day)} value={formatDateISO(day)}>
                               {formatDateLong(day)}
@@ -187,11 +197,7 @@ export function WeeklyPlanner({
         </div>
 
         <Card title="Resumen semanal" subtitle="Actividades programadas y notas para la semana." className="border-agro-300 bg-white/95">
-          <div className="grid gap-4 sm:grid-cols-3">
-            <div className="rounded-3xl bg-agro-50 p-5 text-center">
-              <p className="text-4xl font-bold text-agro-900">{plannedCount}</p>
-              <p className="mt-2 text-sm uppercase tracking-[0.18em] text-stone-600">Pedidos agendados</p>
-            </div>
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="rounded-3xl bg-agro-50 p-5 text-center">
               <p className="text-4xl font-bold text-agro-900">{tasks.length}</p>
               <p className="mt-2 text-sm uppercase tracking-[0.18em] text-stone-600">Notas creadas</p>
@@ -201,17 +207,28 @@ export function WeeklyPlanner({
               <p className="mt-2 text-sm uppercase tracking-[0.18em] text-stone-600">Alertas de hoy</p>
             </div>
           </div>
+          <div className="mt-6 rounded-3xl border border-stone-200 bg-white p-5">
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-lg font-semibold text-agro-900">Bitácora de hoy</p>
+              <span className={`rounded-full px-4 py-2 text-sm font-semibold ${diaryTone.badge}`}>
+                {diaryTone.label}
+              </span>
+            </div>
+            <p className="mt-4 text-sm leading-relaxed text-stone-600">
+              {diaryEntry ? diaryEntry.content : "Aún no has registrado la bitácora de hoy. Ve a la pestaña Bitácora para anotar tu día."}
+            </p>
+          </div>
         </Card>
       </div>
 
       <section className="space-y-4">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h3 className="text-2xl font-semibold text-agro-900">Vista de semana</h3>
-            <p className="text-stone-600">Visualiza todas tus entregas y notas organizadas por día.</p>
+            <h3 className="text-2xl font-semibold text-agro-900">Semana detallada</h3>
+            <p className="text-stone-600">Visualiza todas tus notas y actividades organizadas por día.</p>
           </div>
           <div className="inline-flex items-center gap-3 rounded-3xl border border-stone-200 bg-white px-4 py-3 text-base text-stone-700 shadow-sm">
-            <span className="font-semibold text-agro-900">Semana</span>
+            <span className="font-semibold text-agro-900">Período</span>
             <span>{formatDateShort(weekStart)} — {formatDateShort(new Date(weekStart.getTime() + 6 * 86400000))}</span>
           </div>
         </div>
@@ -228,36 +245,9 @@ export function WeeklyPlanner({
               >
                 <div className="space-y-5">
                   <div>
-                    <p className="text-sm uppercase tracking-[0.2em] text-stone-500">Pedidos</p>
-                    {dayOrders.length === 0 ? (
-                      <p className="mt-3 text-sm text-stone-500">Sin entregas asignadas.</p>
-                    ) : (
-                      <ul className="space-y-3">
-                        {dayOrders.map((order) => (
-                          <li key={order.id} className="rounded-3xl border border-stone-200 bg-stone-50 p-4">
-                            <p className="font-semibold text-stone-900">{order.clientName}</p>
-                            <p className="mt-1 text-sm text-stone-600">{order.product} · {PRIORITY_LABELS[order.priority]}</p>
-                            <select
-                              className="mt-3 w-full rounded-2xl border border-stone-300 bg-white px-3 py-2 text-sm"
-                              value={order.status}
-                              onChange={async (e) => {
-                                await updateOrderStatus(order.id, e.target.value as Order["status"]);
-                                router.refresh();
-                              }}
-                            >
-                              <option value="PENDIENTE">Pendiente</option>
-                              <option value="EN_CAMINO">En camino</option>
-                              <option value="ENTREGADO">Entregado</option>
-                            </select>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-                  </div>
-                  <div>
                     <p className="text-sm uppercase tracking-[0.2em] text-stone-500">Notas</p>
                     {dayTasks.length === 0 ? (
-                      <p className="mt-3 text-sm text-stone-500">Sin notas para este día.</p>
+                      <p className="mt-3 text-sm text-stone-500">No hay notas para este día.</p>
                     ) : (
                       <ul className="space-y-3">
                         {dayTasks.map((task) => (
@@ -278,6 +268,34 @@ export function WeeklyPlanner({
                                 Eliminar
                               </button>
                             </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.2em] text-stone-500">Pedidos</p>
+                    {dayOrders.length === 0 ? (
+                      <p className="mt-3 text-sm text-stone-500">Sin entregas programadas.</p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {dayOrders.map((order) => (
+                          <li key={order.id} className="rounded-2xl border border-stone-200 bg-stone-50 p-4">
+                            <p className="font-semibold text-stone-900">{order.clientName}</p>
+                            <p className="mt-1 text-sm text-stone-600">{order.product} · {PRIORITY_LABELS[order.priority]}</p>
+                            <select
+                              className="mt-3 w-full rounded-2xl border border-stone-300 bg-white px-3 py-2 text-sm"
+                              value={order.status}
+                              onChange={async (e) => {
+                                await updateOrderStatus(order.id, e.target.value as Order["status"]);
+                                router.refresh();
+                              }}
+                            >
+                              <option value="PENDIENTE">Pendiente</option>
+                              <option value="EN_CAMINO">En camino</option>
+                              <option value="ENTREGADO">Entregado</option>
+                            </select>
                           </li>
                         ))}
                       </ul>

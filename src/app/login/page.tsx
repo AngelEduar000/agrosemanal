@@ -8,24 +8,19 @@ export default async function LoginPage({
   const params = await searchParams;
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-agro-50 px-4 py-12">
-      <div className="w-full max-w-lg rounded-2xl border-2 border-agro-200 bg-white p-8 shadow-md">
-        <p className="text-center text-sm font-semibold uppercase tracking-wide text-agro-600">
-          Acceso personal
-        </p>
-        <h1 className="mt-2 text-center font-display text-4xl font-bold text-agro-900">
-          AgroSemanal
-        </h1>
-        <p className="mt-4 text-center text-xl leading-relaxed text-stone-700">
-          Ingrese su correo y su PIN para entrar. No necesita esperar ningún mensaje
-          en la bandeja de entrada.
-        </p>
-        <div className="mt-8">
+    <div className="flex min-h-screen items-center justify-center bg-[radial-gradient(circle_at_top,_rgba(44,85,30,0.16),_transparent_28%),_linear-gradient(to_bottom,_#f7faf3,_#e8efe7)] px-4 py-12">
+      <div className="w-full max-w-2xl rounded-[32px] border border-white/40 bg-white/80 p-10 shadow-2xl shadow-stone-200/30 backdrop-blur-xl">
+        <div className="space-y-4 text-center">
+          <p className="text-sm font-semibold uppercase tracking-[0.3em] text-agro-700">Ingreso seguro</p>
+          <h1 className="font-display text-5xl font-bold text-agro-900">Bienvenido a AgroSemanal</h1>
+          <p className="mx-auto max-w-2xl text-lg leading-relaxed text-stone-600">
+            Accede a tu calendario, toma notas con estilo y recibe recordatorios por correo un día antes y el mismo día de tus actividades.
+          </p>
+        </div>
+
+        <div className="mt-10">
           <LoginForm urlError={params.error} />
         </div>
-        <p className="mt-8 text-center text-base text-stone-500">
-          Los recordatorios y resúmenes semanales sí llegan por correo automáticamente.
-        </p>
       </div>
     </div>
   );

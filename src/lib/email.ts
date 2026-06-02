@@ -1,4 +1,4 @@
-import type { Order } from "@prisma/client";
+import type { FieldTask, Order } from "@prisma/client";
 import { PRIORITY_LABELS, STATUS_LABELS } from "./labels";
 import { formatDateShort, formatWeekRange } from "./dates";
 import { createResendClient, getEmailFrom } from "./resend-client";
@@ -89,6 +89,99 @@ export function buildDiaryReminderHtml() {
       <p style="font-size:16px"><a href="${baseUrl}/bitacora" style="color:#476339">Abrir bitácora</a></p>
     </div>
   `;
+}
+
+function tasksToRows(tasks: FieldTask[]) {
+  return tasks
+    .map(
+      (task) => `<tr>
+        <td style="padding:8px;border:1px solid #ddd">${formatDateShort(new Date(task.date))}</td>
+        <td style="padding:8px;border:1px solid #ddd">${task.title}</td>
+        <td style="padding:8px;border:1px solid #ddd">${task.notes ?? ""}</td>
+      </tr>`
+    )
+    .join("");
+}
+
+export function buildDailyActivityHtml(
+  todayOrders: Order[],
+  tomorrowOrders: Order[],
+  todayTasks: FieldTask[],
+  tomorrowTasks: FieldTask[]
+) {
+  const section = (title: string, rows: string) => `
+    <div style="margin-top:24px">
+      <h2 style="font-size:20px;color:#476339">${title}</h2>
+      ${rows}
+    </div>`;
+
+  const orderSection = (label: string, items: Order[]) =>
+    items.length
+      ? `<table style="width:100%;border-collapse:collapse;font-size:16px">
+          <thead>
+            <tr style="background:#e6ede0">
+              <th style="padding:8px;border:1px solid #ddd">Fecha</th>
+              <th style="padding:8px;border:1px solid #ddd">Cliente</th>
+              <th style="padding:8px;border:1px solid #ddd">Producto</th>
+              <th style="padding:8px;border:1px solid #ddd">Prioridad</th>
+              <th style="padding:8px;border:1px solid #ddd">Estado</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${items
+              .map(
+                (order) => `<tr>
+                <td style="padding:8px;border:1px solid #ddd">${formatDateShort(new Date(order.date))}</td>
+                <td style="padding:8px;border:1px solid #ddd">${order.clientName}</td>
+                <td style="padding:8px;border:1px solid #ddd">${order.product}</td>
+                <td style="padding:8px;border:1px solid #ddd">${PRIORITY_LABELS[order.priority]}</td>
+                <td style="padding:8px;border:1px solid #ddd">${STATUS_LABELS[order.status]}</td>
+              </tr>`
+              )
+              .join("")}
+          </tbody>
+        </table>`
+      : `<p style="font-size:16px;color:#55685d">No hay ${label.toLowerCase()} programadas.</p>`;
+
+  const taskSection = (label: string, items: FieldTask[]) =>
+    items.length
+      ? `<table style="width:100%;border-collapse:collapse;font-size:16px">
+          <thead>
+            <tr style="background:#e6ede0">
+              <th style="padding:8px;border:1px solid #ddd">Fecha</th>
+              <th style="padding:8px;border:1px solid #ddd">Tarea</th>
+              <th style="padding:8px;border:1px solid #ddd">Notas</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${tasksToRows(items)}
+          </tbody>
+        </table>`
+      : `<p style="font-size:16px;color:#55685d">No hay ${label.toLowerCase()} registradas.</p>`;
+
+  return `
+    <div style="font-family:Georgia,serif;max-width:640px;margin:0 auto;color:#283522">
+      <h1 style="font-size:24px;color:#476339">Resumen de actividades</h1>
+      <p style="font-size:18px;line-height:1.7">Aquí está lo que tienes programado para hoy y mañana. Revisa tu agenda y actúa sobre lo más importante.</p>
+      ${section("Actividades para hoy", orderSection("Pedidos de hoy", todayOrders) + taskSection("Notas de hoy", todayTasks))}
+      ${section("Actividades para mañana", orderSection("Pedidos de mañana", tomorrowOrders) + taskSection("Notas de mañana", tomorrowTasks))}
+      <p style="font-size:14px;color:#666;margin-top:24px">AgroSemanal — gestión profesional de tu calendario agrícola.</p>
+    </div>
+  `;
+}
+
+export async function sendDailyActivityReminder(
+  to: string,
+  todayOrders: Order[],
+  tomorrowOrders: Order[],
+  todayTasks: FieldTask[],
+  tomorrowTasks: FieldTask[]
+) {
+  return sendEmail({
+    to,
+    subject: "Recordatorio AgroSemanal: actividades para hoy y mañana",
+    html: buildDailyActivityHtml(todayOrders, tomorrowOrders, todayTasks, tomorrowTasks),
+  });
 }
 
 export async function sendWeeklySummary(to: string, orders: Order[], weekStart: Date) {
