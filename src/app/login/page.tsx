@@ -17,14 +17,14 @@ export default async function LoginPage({
           AgroSemanal
         </h1>
         <p className="mt-4 text-center text-xl leading-relaxed text-stone-700">
-          Ingrese su correo electrónico. Le enviaremos un enlace seguro para entrar, sin
-          contraseña.
+          Ingrese su correo y su PIN para entrar. No necesita esperar ningún mensaje
+          en la bandeja de entrada.
         </p>
         <div className="mt-8">
           <LoginForm urlError={params.error} />
         </div>
         <p className="mt-8 text-center text-base text-stone-500">
-          Solo el correo autorizado puede acceder a esta aplicación.
+          Los recordatorios y resúmenes semanales sí llegan por correo automáticamente.
         </p>
       </div>
     </div>

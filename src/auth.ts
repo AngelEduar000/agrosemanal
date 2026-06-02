@@ -1,48 +1,39 @@
 import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import Resend from "next-auth/providers/resend";
-import { prisma } from "@/lib/prisma";
+import Credentials from "next-auth/providers/credentials";
 import { authConfig } from "@/auth.config";
-import {
-  buildMagicLinkEmailHtml,
-  createResendClient,
-  getEmailFrom,
-  getResendApiKey,
-} from "@/lib/resend-client";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   ...authConfig,
-  adapter: PrismaAdapter(prisma),
   providers: [
-    Resend({
-      from: getEmailFrom(),
-      apiKey: getResendApiKey(),
-      maxAge: 24 * 60 * 60,
-      async sendVerificationRequest({ identifier: email, url, provider }) {
-        const apiKey = getResendApiKey();
-        if (!apiKey) {
-          console.error(
-            "[auth] Configure AUTH_RESEND_KEY o RESEND_API_KEY en Vercel"
-          );
-          throw new Error("Configuration");
+    Credentials({
+      id: "credentials",
+      name: "PIN",
+      credentials: {
+        email: { label: "Correo", type: "email" },
+        pin: { label: "PIN", type: "password" },
+      },
+      async authorize(credentials) {
+        const authorized = process.env.AUTHORIZED_EMAIL?.toLowerCase().trim();
+        const expectedPin = process.env.LOGIN_PIN?.trim();
+        const email = String(credentials?.email ?? "")
+          .toLowerCase()
+          .trim();
+        const pin = String(credentials?.pin ?? "").trim();
+
+        if (!authorized || !expectedPin) {
+          console.error("[auth] Faltan AUTHORIZED_EMAIL o LOGIN_PIN en el servidor");
+          return null;
         }
 
-        const resend = createResendClient();
-        if (!resend) throw new Error("Configuration");
-
-        const { data, error } = await resend.emails.send({
-          from: provider.from ?? getEmailFrom(),
-          to: email,
-          subject: "Enlace de acceso — AgroSemanal",
-          html: buildMagicLinkEmailHtml(url),
-        });
-
-        if (error) {
-          console.error("[auth] Resend rechazó el envío:", error);
-          throw new Error(`ResendError: ${error.message}`);
+        if (email !== authorized || pin !== expectedPin) {
+          return null;
         }
 
-        console.info("[auth] Magic link enviado a", email, "id:", data?.id);
+        return {
+          id: "owner",
+          email: authorized,
+          name: "Agrónomo",
+        };
       },
     }),
   ],
@@ -51,12 +42,16 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;
+        token.email = user.email;
+        token.name = user.name;
       }
       return token;
     },
     async session({ session, token }) {
-      if (session.user && token.id) {
-        session.user.id = token.id as string;
+      if (session.user) {
+        session.user.id = (token.id as string) ?? "owner";
+        session.user.email = token.email as string;
+        session.user.name = token.name as string;
       }
       return session;
     },

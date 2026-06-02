@@ -1,57 +1,45 @@
 "use client";
 
 import { useState } from "react";
-import { requestLoginLink } from "@/actions/auth";
+import { signIn } from "next-auth/react";
+import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 
 const URL_ERROR_MESSAGES: Record<string, string> = {
-  Configuration:
-    "Error de configuración en el servidor. Contacte al administrador.",
-  AccessDenied: "Correo no autorizado o enlace inválido.",
-  Verification: "El enlace expiró. Solicite uno nuevo.",
+  Configuration: "Error de configuración en el servidor.",
+  CredentialsSignin: "Correo o PIN incorrectos. Verifique e intente de nuevo.",
 };
 
 export function LoginForm({ urlError }: { urlError?: string | null }) {
+  const router = useRouter();
   const [email, setEmail] = useState("");
+  const [pin, setPin] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(
-    urlError ? URL_ERROR_MESSAGES[urlError] ?? "No se pudo completar el acceso." : ""
+    urlError ? URL_ERROR_MESSAGES[urlError] ?? "No se pudo entrar." : ""
   );
-  const [success, setSuccess] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setError("");
-    setSuccess(false);
 
-    const result = await requestLoginLink(email);
+    const result = await signIn("credentials", {
+      email: email.trim(),
+      pin: pin.trim(),
+      redirect: false,
+    });
 
     setLoading(false);
 
-    if (!result.ok) {
-      setError(result.error);
+    if (result?.error) {
+      setError(URL_ERROR_MESSAGES.CredentialsSignin);
       return;
     }
 
-    setSuccess(true);
-  }
-
-  if (success) {
-    return (
-      <div className="rounded-lg bg-agro-100 p-6 text-lg text-agro-900" role="status">
-        <p className="font-semibold">Correo enviado</p>
-        <p className="mt-2">
-          Revise la bandeja de <strong>{email.trim()}</strong> y haga clic en el enlace
-          &quot;Entrar a AgroSemanal&quot;. Si no lo ve, revise correo no deseado.
-        </p>
-        <p className="mt-3 text-base text-stone-700">
-          Con la cuenta gratuita de Resend y remitente de prueba, el correo solo llega al
-          email con el que creó su cuenta en resend.com.
-        </p>
-      </div>
-    );
+    router.push("/pedidos");
+    router.refresh();
   }
 
   return (
@@ -62,10 +50,22 @@ export function LoginForm({ urlError }: { urlError?: string | null }) {
         name="email"
         autoComplete="email"
         required
-        placeholder="ejemplo@correo.com"
+        placeholder="su-correo@ejemplo.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        hint="Debe ser el mismo correo autorizado en la aplicación."
+        hint="El correo registrado para esta aplicación."
+      />
+      <Input
+        label="PIN de acceso"
+        type="password"
+        name="pin"
+        autoComplete="current-password"
+        required
+        inputMode="numeric"
+        placeholder="Su PIN personal"
+        value={pin}
+        onChange={(e) => setPin(e.target.value)}
+        hint="Clave numérica que configuró en el servidor (no se envía por correo)."
       />
       {error && (
         <p className="rounded-lg bg-red-50 p-4 text-lg text-red-800" role="alert">
@@ -73,7 +73,7 @@ export function LoginForm({ urlError }: { urlError?: string | null }) {
         </p>
       )}
       <Button type="submit" fullWidth disabled={loading}>
-        {loading ? "Enviando enlace…" : "Enviar enlace de acceso"}
+        {loading ? "Entrando…" : "Entrar a AgroSemanal"}
       </Button>
     </form>
   );

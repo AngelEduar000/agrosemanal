@@ -4,7 +4,7 @@ Aplicación web personal para un agrónomo independiente: pedidos, planificació
 
 ## Características
 
-- **Acceso seguro** con enlace mágico por correo (un solo usuario autorizado)
+- **Acceso seguro** con correo + PIN (un solo usuario autorizado)
 - **Pedidos** con prioridad, estado, filtros por semana y exportación Excel
 - **Planificador** de 7 días con entregas y labores de campo
 - **Bitácora diaria** con recordatorio por correo
@@ -55,17 +55,11 @@ Abra [http://localhost:3000](http://localhost:3000).
 | `EMAIL_FROM` | Remitente en Resend |
 | `CRON_SECRET` | Protege rutas `/api/cron/*` en Vercel |
 
-### Si no llega el correo de acceso
+Guía detallada: ver **[CONFIGURACION.md](./CONFIGURACION.md)**.
 
-1. En **Vercel → Settings → Environment Variables**, confirme:
-   - `AUTH_RESEND_KEY` o `RESEND_API_KEY` (al menos una)
-   - `AUTHORIZED_EMAIL` = el mismo correo que escribe en el login
-   - `NEXTAUTH_URL` = URL exacta de producción (ej. `https://agrosemanal.vercel.app`)
-   - `AUTH_SECRET` y `NEXTAUTH_SECRET`
-2. En [Resend → Emails](https://resend.com/emails) vea si el envío aparece como enviado o fallido.
-3. Con remitente de prueba `onboarding@resend.dev`, **solo se entrega al correo con el que creó la cuenta Resend**.
-4. Para enviar a cualquier correo, **verifique un dominio** en Resend y use `EMAIL_FROM` con ese dominio.
-5. El login ahora muestra un **mensaje de error claro** si algo falla (antes podía decir “revise su correo” sin haber enviado nada).
+**Login:** `AUTHORIZED_EMAIL` + `LOGIN_PIN` (no usa correo para entrar).
+
+**Notificaciones:** `RESEND_API_KEY` + `EMAIL_FROM` → resumen semanal y recordatorio de bitácora.
 
 ## Despliegue en Vercel
 

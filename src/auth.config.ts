@@ -1,11 +1,10 @@
 import type { NextAuthConfig } from "next-auth";
 
-const publicPaths = ["/login", "/login/verificar", "/login/error", "/api/auth"];
+const publicPaths = ["/login", "/login/error", "/api/auth"];
 
 export const authConfig = {
   pages: {
     signIn: "/login",
-    verifyRequest: "/login/verificar",
     error: "/login/error",
   },
   session: {
@@ -13,12 +12,6 @@ export const authConfig = {
   },
   providers: [],
   callbacks: {
-    async signIn({ user }) {
-      const authorized = process.env.AUTHORIZED_EMAIL?.toLowerCase().trim();
-      const email = user.email?.toLowerCase().trim();
-      if (!authorized || !email) return false;
-      return email === authorized;
-    },
     authorized({ auth, request }) {
       const { pathname } = request.nextUrl;
       const isPublic = publicPaths.some((p) => pathname.startsWith(p));
