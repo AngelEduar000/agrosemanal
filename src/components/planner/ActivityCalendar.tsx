@@ -203,14 +203,14 @@ export function ActivityCalendar({
             </p>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap sm:justify-end">
+          <div className="flex items-center gap-2 flex-wrap sm:justify-end">
             <div className="flex gap-1 rounded-xl border border-stone-200/60 bg-stone-50/80 p-1 dark:border-stone-800 dark:bg-stone-950/60">
               {(["week", "month", "day"] as ViewMode[]).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => setViewMode(mode)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
+                  className={`px-2.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-200 cursor-pointer ${
                     viewMode === mode
                       ? "bg-agro-700 text-white shadow-sm dark:bg-agro-600"
                       : "text-stone-600 dark:text-stone-400 hover:bg-white dark:hover:bg-stone-900 hover:text-stone-900 dark:hover:text-white"
@@ -223,22 +223,22 @@ export function ActivityCalendar({
 
             <Link
               href={exportUrl}
-              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-agro-700 border border-agro-800 dark:bg-agro-600 dark:border-agro-700 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-agro-800 dark:hover:bg-agro-700 transition"
+              className="inline-flex items-center gap-1 whitespace-nowrap rounded-xl bg-agro-700 border border-agro-800 dark:bg-agro-600 dark:border-agro-700 px-3 py-2 text-xs font-semibold text-white shadow hover:bg-agro-800 dark:hover:bg-agro-700 transition"
             >
-              📥 Excel Completo
+              📥 Excel
             </Link>
 
             <button
               onClick={() => openCreateModal(selectedDate)}
-              className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-xl bg-emerald-600 border border-emerald-700 px-4 py-2 text-xs font-semibold text-white shadow hover:bg-emerald-700 transition cursor-pointer"
+              className="inline-flex items-center gap-1 whitespace-nowrap rounded-xl bg-emerald-600 border border-emerald-700 px-3 py-2 text-xs font-semibold text-white shadow hover:bg-emerald-700 transition cursor-pointer"
             >
-              ➕ Nueva Labor
+              ➕ Labor
             </button>
           </div>
         </div>
 
         {todayCount > 0 && (
-          <div className="rounded-2xl border-l-4 border-agro-600 bg-agro-50/50 dark:bg-agro-950/10 p-3.5 mt-4 flex items-center justify-between">
+          <div className="rounded-2xl border-l-4 border-agro-600 bg-agro-50/50 dark:bg-agro-950/10 p-3.5 mt-4 flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-2">
               <span className="text-base">🌾</span>
               <p className="text-xs font-bold text-agro-900 dark:text-agro-400">
@@ -258,13 +258,14 @@ export function ActivityCalendar({
       {/* Vista Mensual */}
       {viewMode === "month" && (
         <div className="rounded-[28px] border border-white/60 bg-white/70 p-5 shadow-[0_15px_50px_rgba(45,61,40,0.03)] backdrop-blur-xl dark:border-white/10 dark:bg-stone-900/80">
-          <div className="grid grid-cols-7 gap-2.5">
+          <div className="hidden md:grid grid-cols-7 gap-2.5 mb-4">
             {DAY_SHORT.map((day) => (
               <div key={day} className="p-2 text-center">
                 <p className="text-xs font-bold text-stone-500 dark:text-stone-400 uppercase tracking-wider">{day}</p>
               </div>
             ))}
-
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-7 gap-2.5">
             {monthDays.map((day) => {
               const dayTasks = tasksForDay(day);
               const diary    = diaryForDay(day);
@@ -296,7 +297,7 @@ export function ActivityCalendar({
                         : !isCurrentMonth ? "text-stone-400 dark:text-stone-600"
                         : "text-stone-700 dark:text-stone-300"
                       }`}>
-                        {day.getUTCDate()}
+                        {day.getUTCDate()} {isCurrentMonth && <span className="text-[9px] font-normal text-stone-500 dark:text-stone-400 ml-1 hidden sm:inline">{DAY_SHORT[day.getUTCDay() === 0 ? 6 : day.getUTCDay() - 1]}</span>}
                       </p>
                       <div className="flex gap-1 items-center">
                         {diary && (

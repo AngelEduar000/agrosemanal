@@ -7,10 +7,12 @@ export async function sendEmail({
   to,
   subject,
   html,
+  text,
 }: {
   to: string;
   subject: string;
   html: string;
+  text?: string;
 }) {
   const resend = createResendClient();
   const from = getEmailFrom();
@@ -20,11 +22,20 @@ export async function sendEmail({
     return { ok: false as const, skipped: true, reason: "no_api_key" as const };
   }
 
+  // Generate plain text version from HTML if not provided
+  const plainText = text || html.replace(/<[^>]*>/g, '').replace(/\s+/g, ' ').trim();
+
   const { data, error } = await resend.emails.send({
     from,
     to,
     subject,
     html,
+    text: plainText,
+    headers: {
+      'List-Unsubscribe': `<mailto:unsubscribe@agrosemanal.com?subject=unsubscribe>`,
+      'X-Priority': '3',
+      'X-Mailer': 'AgroSemanal',
+    },
   });
 
   if (error) {
