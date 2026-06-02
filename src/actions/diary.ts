@@ -42,3 +42,15 @@ export async function hasDiaryToday() {
   const entry = await getDiaryEntry(today);
   return !!entry;
 }
+
+export async function getDiaryEntriesForRange(startIso: string, endIso: string) {
+  await requireSession();
+  const start = parseDateISO(startIso);
+  const end = parseDateISO(endIso);
+  return prisma.diaryEntry.findMany({
+    where: {
+      date: { gte: start, lte: end },
+    },
+    orderBy: { date: "asc" },
+  });
+}
