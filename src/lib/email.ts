@@ -1,7 +1,7 @@
 import { Resend } from "resend";
 import type { Order } from "@prisma/client";
-import { CLIENT_TYPE_LABELS, PRIORITY_LABELS, STATUS_LABELS } from "./labels";
-import { formatDateShort, formatWeekRange, getWeekStart } from "./dates";
+import { PRIORITY_LABELS, STATUS_LABELS } from "./labels";
+import { formatDateShort, formatWeekRange } from "./dates";
 
 const resend = process.env.RESEND_API_KEY
   ? new Resend(process.env.RESEND_API_KEY)

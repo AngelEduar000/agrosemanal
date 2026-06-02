@@ -2,8 +2,6 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { WeeklyPlanner } from "@/components/planner/WeeklyPlanner";
 import { formatDateISO, formatWeekRange, getWeekKey, getWeekStart } from "@/lib/dates";
-import Link from "next/link";
-
 export default async function PlanificadorPage({
   searchParams,
 }: {

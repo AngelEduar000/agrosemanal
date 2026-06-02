@@ -2,7 +2,7 @@
 
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { formatDateISO, getWeekKey, parseDateISO } from "@/lib/dates";
+import { getWeekKey, parseDateISO } from "@/lib/dates";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import type { ClientType, OrderStatus, Priority } from "@prisma/client";
