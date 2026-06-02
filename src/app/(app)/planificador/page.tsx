@@ -1,12 +1,10 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { WeeklyPlanner } from "@/components/planner/WeeklyPlanner";
-import { getDiaryEntry } from "@/actions/diary";
+import { ActivityCalendar } from "@/components/planner/ActivityCalendar";
 import {
   formatDateISO,
   getWeekKey,
   getWeekStartForKey,
-  getWeekEnd,
 } from "@/lib/dates";
 
 export default async function PlanificadorPage({
@@ -18,32 +16,29 @@ export default async function PlanificadorPage({
   const params = await searchParams;
   const weekKey = params.week ?? getWeekKey(new Date());
   const weekStartDate = getWeekStartForKey(weekKey);
-  const end = getWeekEnd(weekStartDate);
-  const todayISO = formatDateISO(new Date());
+  
+  // Calculate a wide date range to cover the entire monthly grid (6 weeks grid)
+  const startRange = new Date(weekStartDate.getTime() - 10 * 86400000); // 10 days before
+  const endRange = new Date(weekStartDate.getTime() + 45 * 86400000); // 45 days after
 
-  const [orders, tasks, todayDiary] = await Promise.all([
-    prisma.order.findMany({
-      where: { week: weekKey },
-      orderBy: { priority: "asc" },
-    }),
+  const [tasks, diaryEntries] = await Promise.all([
     prisma.fieldTask.findMany({
-      where: { date: { gte: weekStartDate, lte: end } },
+      where: { date: { gte: startRange, lte: endRange } },
       orderBy: { date: "asc" },
     }),
-    getDiaryEntry(todayISO),
+    prisma.diaryEntry.findMany({
+      where: { date: { gte: startRange, lte: endRange } },
+      orderBy: { date: "asc" },
+    }),
   ]);
-
-  const unassigned = orders.filter((o) => !o.plannedDay);
 
   return (
     <div className="space-y-4">
-      <WeeklyPlanner
+      <ActivityCalendar
         weekKey={weekKey}
         weekStartIso={formatDateISO(weekStartDate)}
-        orders={orders}
         tasks={tasks}
-        diaryEntry={todayDiary}
-        unassignedOrders={unassigned}
+        diaryEntries={diaryEntries}
       />
     </div>
   );

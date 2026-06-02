@@ -104,11 +104,14 @@ model DiaryEntry {
 }
 
 model FieldTask {
-  id        String   @id @default(cuid())
-  date      DateTime @db.Date
-  title     String
-  notes     String?
-  createdAt DateTime @default(now()) @map("created_at")
+  id            String      @id @default(cuid())
+  date          DateTime    @db.Date
+  title         String
+  notes         String?
+  priority      Priority    @default(MEDIA)
+  completed     Boolean     @default(false)
+  scheduledTime String?     @map("scheduled_time")
+  createdAt     DateTime    @default(now()) @map("created_at")
 
   @@index([date])
   @@map("field_tasks")
