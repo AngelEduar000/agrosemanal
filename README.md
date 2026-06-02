@@ -47,12 +47,25 @@ Abra [http://localhost:3000](http://localhost:3000).
 |----------|-------------|
 | `DATABASE_URL` | URL de PostgreSQL (Neon) |
 | `NEXTAUTH_URL` | URL pública de la app |
+| `AUTH_SECRET` | Mismo valor que `NEXTAUTH_SECRET` |
 | `NEXTAUTH_SECRET` | Secreto aleatorio largo |
-| `AUTHORIZED_EMAIL` | Único correo que puede entrar |
-| `AUTH_RESEND_KEY` | API key de Resend (login) |
-| `RESEND_API_KEY` | API key de Resend (notificaciones) |
-| `EMAIL_FROM` | Remitente verificado en Resend |
+| `AUTHORIZED_EMAIL` | Único correo que puede entrar (exacto al iniciar sesión) |
+| `AUTH_RESEND_KEY` | **Obligatorio** para magic link (API key Resend) |
+| `RESEND_API_KEY` | Notificaciones (puede ser la misma key) |
+| `EMAIL_FROM` | Remitente en Resend |
 | `CRON_SECRET` | Protege rutas `/api/cron/*` en Vercel |
+
+### Si no llega el correo de acceso
+
+1. En **Vercel → Settings → Environment Variables**, confirme:
+   - `AUTH_RESEND_KEY` o `RESEND_API_KEY` (al menos una)
+   - `AUTHORIZED_EMAIL` = el mismo correo que escribe en el login
+   - `NEXTAUTH_URL` = URL exacta de producción (ej. `https://agrosemanal.vercel.app`)
+   - `AUTH_SECRET` y `NEXTAUTH_SECRET`
+2. En [Resend → Emails](https://resend.com/emails) vea si el envío aparece como enviado o fallido.
+3. Con remitente de prueba `onboarding@resend.dev`, **solo se entrega al correo con el que creó la cuenta Resend**.
+4. Para enviar a cualquier correo, **verifique un dominio** en Resend y use `EMAIL_FROM` con ese dominio.
+5. El login ahora muestra un **mensaje de error claro** si algo falla (antes podía decir “revise su correo” sin haber enviado nada).
 
 ## Despliegue en Vercel
 

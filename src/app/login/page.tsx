@@ -1,6 +1,12 @@
 import { LoginForm } from "./LoginForm";
 
-export default function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ error?: string }>;
+}) {
+  const params = await searchParams;
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-agro-50 px-4 py-12">
       <div className="w-full max-w-lg rounded-2xl border-2 border-agro-200 bg-white p-8 shadow-md">
@@ -15,7 +21,7 @@ export default function LoginPage() {
           contraseña.
         </p>
         <div className="mt-8">
-          <LoginForm />
+          <LoginForm urlError={params.error} />
         </div>
         <p className="mt-8 text-center text-base text-stone-500">
           Solo el correo autorizado puede acceder a esta aplicación.

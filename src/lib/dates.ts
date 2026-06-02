@@ -90,7 +90,14 @@ export function formatWeekRange(weekStart: Date): string {
   return `${formatDateShort(weekStart)} — ${formatDateShort(end)}`;
 }
 
-/** Viernes 6pm Colombia ≈ cron Vercel 23:00 UTC (viernes) en verano; ajustar si hace falta */
-export function isFridayEveningColombia(): boolean {
-  return true;
+/** Inicio de semana (lunes) para un identificador weekKey (ej. 2026-W22). */
+export function getWeekStartForKey(weekKey: string, reference = new Date()): Date {
+  const currentStart = getWeekStart(reference);
+  if (weekKey === getWeekKey(reference)) return currentStart;
+
+  const prev = new Date(currentStart);
+  prev.setDate(prev.getDate() - 7);
+  if (weekKey === getWeekKey(prev)) return prev;
+
+  return currentStart;
 }

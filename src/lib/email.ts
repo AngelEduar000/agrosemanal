@@ -1,11 +1,7 @@
-import { Resend } from "resend";
 import type { Order } from "@prisma/client";
 import { PRIORITY_LABELS, STATUS_LABELS } from "./labels";
 import { formatDateShort, formatWeekRange } from "./dates";
-
-const resend = process.env.RESEND_API_KEY
-  ? new Resend(process.env.RESEND_API_KEY)
-  : null;
+import { createResendClient, getEmailFrom } from "./resend-client";
 
 export async function sendEmail({
   to,
@@ -16,24 +12,28 @@ export async function sendEmail({
   subject: string;
   html: string;
 }) {
-  if (!resend || !process.env.EMAIL_FROM) {
-    console.warn("[email] Resend no configurado; correo no enviado:", subject);
-    return { ok: false as const, skipped: true };
+  const resend = createResendClient();
+  const from = getEmailFrom();
+
+  if (!resend) {
+    console.error("[email] Falta AUTH_RESEND_KEY o RESEND_API_KEY");
+    return { ok: false as const, skipped: true, reason: "no_api_key" as const };
   }
 
-  const { error } = await resend.emails.send({
-    from: process.env.EMAIL_FROM,
+  const { data, error } = await resend.emails.send({
+    from,
     to,
     subject,
     html,
   });
 
   if (error) {
-    console.error("[email]", error);
-    return { ok: false as const, error };
+    console.error("[email] Resend:", error);
+    return { ok: false as const, error, reason: "resend_error" as const };
   }
 
-  return { ok: true as const };
+  console.info("[email] Enviado:", { to, subject, id: data?.id });
+  return { ok: true as const, id: data?.id };
 }
 
 export function buildWeeklySummaryHtml(orders: Order[], weekLabel: string) {
@@ -78,6 +78,7 @@ export function buildWeeklySummaryHtml(orders: Order[], weekLabel: string) {
 }
 
 export function buildDiaryReminderHtml() {
+  const baseUrl = process.env.NEXTAUTH_URL ?? "https://tu-app.vercel.app";
   return `
     <div style="font-family:Georgia,serif;max-width:520px;margin:0 auto;color:#283522">
       <h1 style="font-size:22px;color:#476339">Recordatorio de bitácora</h1>
@@ -85,7 +86,7 @@ export function buildDiaryReminderHtml() {
         Aún no ha registrado la bitácora de hoy en AgroSemanal.
         Tómese un momento para anotar entregas, labores de campo o el clima del día.
       </p>
-      <p style="font-size:16px"><a href="${process.env.NEXTAUTH_URL}/bitacora" style="color:#476339">Abrir bitácora</a></p>
+      <p style="font-size:16px"><a href="${baseUrl}/bitacora" style="color:#476339">Abrir bitácora</a></p>
     </div>
   `;
 }

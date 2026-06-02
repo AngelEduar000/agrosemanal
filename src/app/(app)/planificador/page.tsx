@@ -1,7 +1,14 @@
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { WeeklyPlanner } from "@/components/planner/WeeklyPlanner";
-import { formatDateISO, formatWeekRange, getWeekKey, getWeekStart } from "@/lib/dates";
+import {
+  formatDateISO,
+  formatWeekRange,
+  getWeekEnd,
+  getWeekKey,
+  getWeekStartForKey,
+} from "@/lib/dates";
+
 export default async function PlanificadorPage({
   searchParams,
 }: {
@@ -10,9 +17,8 @@ export default async function PlanificadorPage({
   await auth();
   const params = await searchParams;
   const weekKey = params.week ?? getWeekKey(new Date());
-  const weekStartDate = getWeekStart(new Date());
-  const end = new Date(weekStartDate);
-  end.setDate(end.getDate() + 6);
+  const weekStartDate = getWeekStartForKey(weekKey);
+  const end = getWeekEnd(weekStartDate);
 
   const orders = await prisma.order.findMany({
     where: { week: weekKey },
