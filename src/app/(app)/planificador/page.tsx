@@ -19,19 +19,21 @@ export default async function PlanificadorPage({
   const weekKey = params.week ?? getWeekKey(new Date());
   const weekStartDate = getWeekStartForKey(weekKey);
   const end = getWeekEnd(weekStartDate);
+  const todayISO = formatDateISO(new Date());
 
-  const orders = await prisma.order.findMany({
-    where: { week: weekKey },
-    orderBy: { priority: "asc" },
-  });
-
-  const tasks = await prisma.fieldTask.findMany({
-    where: { date: { gte: weekStartDate, lte: end } },
-    orderBy: { date: "asc" },
-  });
+  const [orders, tasks, todayDiary] = await Promise.all([
+    prisma.order.findMany({
+      where: { week: weekKey },
+      orderBy: { priority: "asc" },
+    }),
+    prisma.fieldTask.findMany({
+      where: { date: { gte: weekStartDate, lte: end } },
+      orderBy: { date: "asc" },
+    }),
+    getDiaryEntry(todayISO),
+  ]);
 
   const unassigned = orders.filter((o) => !o.plannedDay);
-  const todayDiary = await getDiaryEntry(formatDateISO(new Date()));
 
   return (
     <div className="space-y-4">
