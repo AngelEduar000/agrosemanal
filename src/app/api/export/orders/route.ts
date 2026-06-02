@@ -5,7 +5,7 @@ import {
   PRIORITY_LABELS,
   STATUS_LABELS,
 } from "@/lib/labels";
-import { formatDateShort, getWeekKey } from "@/lib/dates";
+import { formatDateShort, getWeekKey, startOfDay } from "@/lib/dates";
 import * as XLSX from "xlsx";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -19,6 +19,7 @@ export async function GET(req: NextRequest) {
   const weekParam = req.nextUrl.searchParams.get("week");
 
   let orders;
+  let filename;
 
   if (range === "month") {
     const now = new Date();
@@ -28,12 +29,23 @@ export async function GET(req: NextRequest) {
       where: { date: { gte: start, lte: end } },
       orderBy: { date: "asc" },
     });
+    filename = `pedidos-mes-${now.getMonth() + 1}-${now.getFullYear()}.xlsx`;
+  } else if (range === "day") {
+    const today = startOfDay(new Date());
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    orders = await prisma.order.findMany({
+      where: { date: { gte: today, lt: tomorrow } },
+      orderBy: { date: "asc" },
+    });
+    filename = `pedidos-${formatDateShort(new Date()).replace(/\//g, "-")}.xlsx`;
   } else {
     const week = weekParam ?? getWeekKey(new Date());
     orders = await prisma.order.findMany({
       where: { week },
       orderBy: { date: "asc" },
     });
+    filename = `pedidos-semana-${weekParam ?? getWeekKey(new Date())}.xlsx`;
   }
 
   const rows = orders.map((o) => ({
@@ -52,11 +64,6 @@ export async function GET(req: NextRequest) {
   const book = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(book, sheet, "Pedidos");
   const buffer = XLSX.write(book, { type: "buffer", bookType: "xlsx" });
-
-  const filename =
-    range === "month"
-      ? `pedidos-mes-${new Date().getMonth() + 1}-${new Date().getFullYear()}.xlsx`
-      : `pedidos-semana-${weekParam ?? getWeekKey(new Date())}.xlsx`;
 
   return new NextResponse(buffer, {
     headers: {
