@@ -10,6 +10,7 @@ import {
   getWeekDays,
   parseDateISO,
   getTodayUTC,
+  getWeekKey,
 } from "@/lib/dates";
 import { ActivityEditor } from "@/components/activities/ActivityEditor";
 import { toggleFieldTaskCompleted } from "@/actions/fieldTasks";
@@ -37,15 +38,32 @@ export function ActivityCalendar({
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<FieldTask | null>(null);
 
+  const navigateWeek = (direction: number) => {
+    const offset = direction * 7 * 86400000;
+    const targetDate = new Date(weekStart.getTime() + offset);
+    const newWeekKey = getWeekKey(targetDate);
+    router.push(`/planificador?week=${newWeekKey}`);
+  };
+
+  const navigateMonth = (direction: number) => {
+    const targetDate = new Date(Date.UTC(
+      weekStart.getUTCFullYear(),
+      weekStart.getUTCMonth() + direction,
+      1
+    ));
+    const newWeekKey = getWeekKey(targetDate);
+    router.push(`/planificador?week=${newWeekKey}`);
+  };
+
   const days = useMemo(() => getWeekDays(weekStart), [weekStart]);
 
   const monthDays = useMemo(() => {
-    const firstDay = new Date(weekStart.getFullYear(), weekStart.getMonth(), 1);
-    const lastDay = new Date(weekStart.getFullYear(), weekStart.getMonth() + 1, 0);
+    const firstDay = new Date(Date.UTC(weekStart.getUTCFullYear(), weekStart.getUTCMonth(), 1));
+    const lastDay = new Date(Date.UTC(weekStart.getUTCFullYear(), weekStart.getUTCMonth() + 1, 0));
     const allDays: Date[] = [];
     
     // Find first Monday of grid
-    let startOffset = firstDay.getDay() - 1; // Mon=0 ... Sun=6
+    let startOffset = firstDay.getUTCDay() - 1; // Mon=0 ... Sun=6
     if (startOffset < 0) startOffset = 6;
     
     for (let i = 0; i < startOffset; i++) {
@@ -140,16 +158,46 @@ export function ActivityCalendar({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-agro-700 dark:text-agro-400">Planificador Unificado</span>
-            <h1 className="text-2xl font-display font-bold text-stone-900 dark:text-white mt-0.5 flex items-center gap-2.5">
-              <span>🗓️</span>
-              <span>
-                {viewMode === "week"
-                  ? `Semana ${weekKey}`
-                  : viewMode === "month"
-                    ? `${new Date(currentYear, currentMonth - 1, 1).toLocaleDateString("es-ES", { month: "long" })} ${currentYear}`
-                    : "Planificador de Hoy"}
-              </span>
-            </h1>
+            <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+              <h1 className="text-2xl font-display font-bold text-stone-900 dark:text-white flex items-center gap-2.5">
+                <span>🗓️</span>
+                <span>
+                  {viewMode === "week"
+                    ? `Semana ${weekKey}`
+                    : viewMode === "month"
+                      ? `${new Date(Date.UTC(currentYear, currentMonth - 1, 1)).toLocaleDateString("es-ES", { month: "long", timeZone: "UTC" })} ${currentYear}`
+                      : "Planificador de Hoy"}
+                </span>
+              </h1>
+              
+              {/* Botones de Navegación de Fecha */}
+              <div className="flex items-center gap-1 bg-stone-100/80 dark:bg-stone-950/60 rounded-xl p-1 border border-stone-200/50 dark:border-stone-800 shadow-sm">
+                <button
+                  type="button"
+                  onClick={() => viewMode === "month" ? navigateMonth(-1) : navigateWeek(-1)}
+                  className="p-1 px-2.5 rounded-lg text-xs font-bold hover:bg-white dark:hover:bg-stone-900 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
+                  title="Mes/Semana Anterior"
+                >
+                  ◀
+                </button>
+                <button
+                  type="button"
+                  onClick={() => router.push(`/planificador`)}
+                  className="p-1 px-3 rounded-lg text-[10px] font-bold uppercase tracking-wider hover:bg-white dark:hover:bg-stone-900 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
+                  title="Mes/Semana Actual"
+                >
+                  Hoy
+                </button>
+                <button
+                  type="button"
+                  onClick={() => viewMode === "month" ? navigateMonth(1) : navigateWeek(1)}
+                  className="p-1 px-2.5 rounded-lg text-xs font-bold hover:bg-white dark:hover:bg-stone-900 hover:text-stone-900 dark:hover:text-white transition cursor-pointer"
+                  title="Siguiente Mes/Semana"
+                >
+                  ▶
+                </button>
+              </div>
+            </div>
             <p className="text-xs text-stone-500 dark:text-stone-400 mt-1 font-medium">
               {viewMode === "week"
                 ? `${formatDateShort(weekStart)} — ${formatDateShort(new Date(weekStart.getTime() + 6 * 86400000))}`
