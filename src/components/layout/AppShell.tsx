@@ -19,24 +19,22 @@ export function AppShell({
   const pathname = usePathname();
 
   return (
-    <div className="min-h-screen bg-[radial-gradient(circle_at_top_left,_rgba(56,99,46,0.18),_transparent_25%),radial-gradient(circle_at_bottom_right,_rgba(72,113,58,0.16),_transparent_30%),linear-gradient(to_bottom,_#f7faf3,_#eaf0e8)] text-stone-950">
-      <div className="mx-auto flex min-h-screen max-w-[1480px] gap-6 px-4 py-6 sm:px-6">
-        <aside className="flex w-full max-w-[320px] flex-col gap-8 rounded-[38px] border border-white/30 bg-white/70 p-6 shadow-2xl shadow-stone-200/30 backdrop-blur-2xl">
-          <div className="space-y-4">
-            <div className="rounded-3xl bg-green-950/10 p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.32em] text-agro-700">AgroSemanal</p>
-              <h1 className="mt-3 text-3xl font-display font-bold text-agro-900">Agenda inteligente</h1>
-              <p className="mt-2 text-sm leading-6 text-stone-600">Calendario, bitácoras y recordatorios listos para tu día.</p>
-            </div>
-            {userName ? (
-              <div className="rounded-3xl border border-agro-100 bg-agro-50 p-5">
-                <p className="text-sm uppercase tracking-[0.22em] text-stone-600">Bienvenido</p>
-                <p className="mt-2 text-2xl font-semibold text-agro-900">{userName}</p>
-              </div>
-            ) : null}
+    <div className="min-h-screen bg-gradient-to-b from-stone-50 to-stone-100">
+      <div className="mx-auto flex min-h-screen gap-0">
+        <aside className="flex w-56 shrink-0 flex-col gap-4 border-r border-stone-200 bg-white p-4">
+          <div className="space-y-2">
+            <p className="text-xs font-semibold uppercase tracking-wide text-agro-700">AgroSemanal</p>
+            <h1 className="text-lg font-bold text-agro-900">Tu agenda</h1>
           </div>
 
-          <nav className="space-y-3">
+          {userName ? (
+            <div className="rounded-lg bg-agro-50 px-3 py-2">
+              <p className="text-xs uppercase tracking-wide text-stone-600">Hola</p>
+              <p className="text-sm font-semibold text-agro-900">{userName}</p>
+            </div>
+          ) : null}
+
+          <nav className="space-y-1">
             {NAV.map((item) => {
               const active = pathname.startsWith(item.href);
               return (
@@ -44,10 +42,10 @@ export function AppShell({
                   key={item.href}
                   href={item.href}
                   className={[
-                    "block rounded-3xl px-5 py-4 text-lg font-semibold transition",
+                    "block rounded-md px-3 py-2 text-sm font-medium transition",
                     active
-                      ? "bg-agro-700 text-white shadow-lg shadow-agro-700/20"
-                      : "border border-stone-200 bg-white text-stone-900 hover:border-agro-300 hover:bg-agro-50",
+                      ? "bg-agro-700 text-white"
+                      : "text-stone-700 hover:bg-stone-100",
                   ].join(" ")}
                 >
                   {item.label}
@@ -56,21 +54,18 @@ export function AppShell({
             })}
           </nav>
 
-          <div className="mt-auto flex flex-col gap-3">
+          <div className="mt-auto space-y-2 border-t border-stone-200 pt-4">
             <button
               type="button"
               onClick={() => signOut({ callbackUrl: "/login" })}
-              className="rounded-3xl border border-stone-200 bg-white px-5 py-3 text-left text-base font-semibold text-stone-800 transition hover:bg-stone-50"
+              className="w-full rounded-md border border-stone-200 bg-white px-3 py-2 text-left text-xs font-medium text-stone-700 transition hover:bg-stone-50"
             >
               Cerrar sesión
             </button>
-            <p className="text-sm leading-relaxed text-stone-600">
-              Accede a tus alertas de hoy y a la bitácora desde el calendario profesional.
-            </p>
           </div>
         </aside>
 
-        <main className="flex-1">{children}</main>
+        <main className="flex-1 overflow-auto p-4">{children}</main>
       </div>
     </div>
   );

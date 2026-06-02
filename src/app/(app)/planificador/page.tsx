@@ -34,15 +34,7 @@ export default async function PlanificadorPage({
   const todayDiary = await getDiaryEntry(formatDateISO(new Date()));
 
   return (
-    <div className="space-y-8">
-      <header>
-        <p className="text-sm uppercase tracking-[0.32em] text-agro-700">Agenda profesional</p>
-        <h1 className="mt-3 font-display text-5xl font-bold text-agro-900">Calendario de actividades</h1>
-        <p className="mt-4 max-w-3xl text-xl leading-relaxed text-stone-700">
-          Visualiza tu semana con claridad y organiza tus bitácoras desde una vista moderna y profesional.
-        </p>
-      </header>
-
+    <div className="space-y-4">
       <WeeklyPlanner
         weekKey={weekKey}
         weekStartIso={formatDateISO(weekStartDate)}

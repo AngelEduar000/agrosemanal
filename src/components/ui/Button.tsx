@@ -23,8 +23,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
     <button
       ref={ref}
       className={[
-        "inline-flex min-h-[3rem] items-center justify-center rounded-lg px-6 py-3 text-lg font-semibold",
-        "transition-colors focus:outline-none focus:ring-4 focus:ring-offset-2",
+        "inline-flex min-h-10 items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold",
+        "transition-colors focus:outline-none focus:ring-2 focus:ring-offset-1",
         "disabled:cursor-not-allowed disabled:opacity-50",
         fullWidth ? "w-full" : "",
         variants[variant],
