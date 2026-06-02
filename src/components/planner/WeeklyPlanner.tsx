@@ -1,9 +1,13 @@
 "use client";
 
 import type { FieldTask, Order } from "@prisma/client";
+import Link from "next/link";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   formatDateISO,
   formatDateLong,
+  formatDateShort,
   getWeekDays,
   parseDateISO,
 } from "@/lib/dates";
@@ -14,17 +18,17 @@ import { Card } from "@/components/ui/Card";
 import { Input } from "@/components/ui/Input";
 import { Textarea } from "@/components/ui/Textarea";
 import { Button } from "@/components/ui/Button";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
 
 const DAY_SHORT = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"];
 
 export function WeeklyPlanner({
+  weekKey,
   weekStartIso,
   orders,
   tasks,
   unassignedOrders,
 }: {
+  weekKey: string;
   weekStartIso: string;
   orders: Order[];
   tasks: FieldTask[];
@@ -32,8 +36,8 @@ export function WeeklyPlanner({
 }) {
   const router = useRouter();
   const weekStart = parseDateISO(weekStartIso);
-  const days = getWeekDays(weekStart);
-  const [msg, setMsg] = useState("");
+  const [message, setMessage] = useState("");
+  const [todayAlert, setTodayAlert] = useState("");
 
   function ordersForDay(day: Date) {
     const iso = formatDateISO(day);
@@ -53,153 +57,269 @@ export function WeeklyPlanner({
   }
 
   async function addTask(formData: FormData) {
-    setMsg("");
+    setMessage("");
     const res = await createFieldTask(formData);
     if (res.ok) {
-      setMsg("Labor de campo guardada.");
+      setMessage("Nota guardada correctamente.");
       router.refresh();
     } else {
-      setMsg(res.error ?? "No se pudo guardar.");
+      setMessage(res.error ?? "No se pudo guardar la nota.");
     }
   }
 
+  const days = getWeekDays(weekStart);
+  const today = new Date();
+  const todayOrders = ordersForDay(today);
+  const todayTasks = tasksForDay(today);
+  const todayCount = todayOrders.length + todayTasks.length;
+  const plannedCount = orders.filter((o) => o.plannedDay).length;
+
+  useEffect(() => {
+    if (todayCount > 0) {
+      setTodayAlert(
+        `Tienes ${todayCount} actividad${todayCount > 1 ? "es" : ""} para hoy.`
+      );
+    } else {
+      setTodayAlert("No hay alertas activas para hoy. Aprovecha para revisar la semana.");
+    }
+  }, [todayCount]);
+
   return (
     <div className="space-y-8">
-      {unassignedOrders.length > 0 && (
-        <Card
-          title="Pedidos sin día asignado"
-          subtitle="Asigne cada pedido a un día de la semana."
-        >
-          <ul className="space-y-3">
-            {unassignedOrders.map((o) => (
-              <li
-                key={o.id}
-                className={[
-                  "rounded-lg border-2 p-4",
-                  o.priority === "ALTA" ? "border-amber-500 bg-amber-50" : "border-stone-200",
-                ].join(" ")}
-              >
-                <p className="text-lg font-semibold">
-                  {o.clientName} — {o.product}
-                  {o.priority === "ALTA" && (
-                    <span className="ml-2 text-amber-800">(urgente)</span>
-                  )}
-                </p>
-                <label className="mt-3 block text-base font-semibold">
-                  Asignar al día:
-                  <select
-                    className="mt-1 w-full min-h-[3rem] rounded-lg border-2 border-stone-300 px-3 text-lg"
-                    defaultValue=""
-                    onChange={(e) => e.target.value && assign(o.id, e.target.value)}
-                  >
-                    <option value="">Seleccione un día…</option>
-                    {days.map((d) => (
-                      <option key={formatDateISO(d)} value={formatDateISO(d)}>
-                        {formatDateLong(d)}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {days.map((day, i) => {
-          const iso = formatDateISO(day);
-          const dayOrders = ordersForDay(day);
-          const dayTasks = tasksForDay(day);
-          return (
-            <Card
-              key={iso}
-              title={`${DAY_SHORT[i]} — ${formatDateLong(day)}`}
-              className="min-h-[200px]"
+      <section className="rounded-3xl bg-gradient-to-r from-agro-800 via-agro-700 to-agro-600 p-8 shadow-2xl text-white">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm uppercase tracking-[0.24em] text-agro-200">Agenda semanal</p>
+            <h2 className="mt-3 text-4xl font-bold">Calendario y notas</h2>
+            <p className="mt-3 max-w-2xl text-lg text-agro-100/90">
+              Visualiza tus actividades y pedidos asignados por día, agrega notas rápidas y genera un reporte Excel con un clic.
+            </p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <Link
+              href={`/api/export/orders?range=week&week=${weekKey}`}
+              className="inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-center text-lg font-semibold text-white transition hover:bg-white/20"
             >
-              <section className="mb-6">
-                <h3 className="mb-3 text-lg font-bold text-agro-800">Entregas</h3>
-                {dayOrders.length === 0 ? (
-                  <p className="text-lg text-stone-500">Sin entregas planificadas.</p>
-                ) : (
-                  <ul className="space-y-3">
-                    {dayOrders.map((o) => (
-                      <li
-                        key={o.id}
-                        className={[
-                          "rounded-lg border p-3 text-lg",
-                          o.priority === "ALTA"
-                            ? "border-amber-500 bg-amber-50 font-semibold"
-                            : "border-stone-200 bg-stone-50",
-                        ].join(" ")}
-                      >
-                        <p>{o.clientName}</p>
-                        <p className="text-stone-700">
-                          {o.product} · {PRIORITY_LABELS[o.priority]} ·{" "}
-                          {STATUS_LABELS[o.status]}
-                        </p>
+              Exportar pedidos
+            </Link>
+            <Link
+              href={`/api/export/tasks?range=week&week=${weekKey}`}
+              className="inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-center text-lg font-semibold text-white transition hover:bg-white/20"
+            >
+              Exportar notas
+            </Link>
+            <div className="inline-flex min-h-[3.5rem] items-center justify-center rounded-2xl border border-white/20 bg-white/10 px-5 text-center text-lg font-semibold text-white">
+              Semana {weekKey}
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="grid gap-6 xl:grid-cols-[1.5fr_0.95fr]">
+        <div className="space-y-6">
+          <Card title="Alertas para hoy" subtitle={todayAlert} className="border-agro-300 bg-agro-50">
+            {todayCount > 0 ? (
+              <div className="grid gap-4">
+                {todayOrders.length > 0 && (
+                  <div>
+                    <p className="mb-3 text-lg font-semibold text-agro-800">Pedidos previstos</p>
+                    <ul className="space-y-3">
+                      {todayOrders.map((order) => (
+                        <li key={order.id} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+                          <p className="font-semibold text-stone-900">{order.clientName} · {order.product}</p>
+                          <p className="mt-1 text-sm text-stone-600">{STATUS_LABELS[order.status]} · {PRIORITY_LABELS[order.priority]}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {todayTasks.length > 0 && (
+                  <div>
+                    <p className="mb-3 text-lg font-semibold text-agro-800">Notas y labores</p>
+                    <ul className="space-y-3">
+                      {todayTasks.map((task) => (
+                        <li key={task.id} className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm">
+                          <p className="font-semibold text-stone-900">{task.title}</p>
+                          {task.notes && <p className="mt-2 text-sm text-stone-600">{task.notes}</p>}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <p className="text-lg text-stone-600">No tienes actividades asignadas para hoy. Revisa la semana y organiza tus tareas.</p>
+            )}
+          </Card>
+
+          <Card title="Pedidos sin día asignado" subtitle="Mueve estos pedidos al calendario para asegurarte de que se entregan a tiempo." className="border-yellow-300 bg-yellow-50">
+            {unassignedOrders.length === 0 ? (
+              <p className="text-lg text-stone-600">Todos los pedidos ya tienen día asignado. Excelente.</p>
+            ) : (
+              <ul className="space-y-4">
+                {unassignedOrders.map((order) => (
+                  <li key={order.id} className="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                      <div>
+                        <p className="text-lg font-semibold text-agro-900">{order.clientName}</p>
+                        <p className="text-sm text-stone-600">{order.product} · {PRIORITY_LABELS[order.priority]}</p>
+                      </div>
+                      <div className="min-w-[12rem]">
                         <select
-                          className="mt-2 w-full min-h-[2.5rem] rounded border border-stone-300 px-2"
-                          value={o.status}
-                          onChange={async (e) => {
-                            await updateOrderStatus(
-                              o.id,
-                              e.target.value as Order["status"]
-                            );
-                            router.refresh();
-                          }}
+                          className="w-full rounded-2xl border border-stone-300 bg-stone-50 px-4 py-3 text-base"
+                          defaultValue=""
+                          onChange={(e) => e.target.value && assign(order.id, e.target.value)}
                         >
-                          <option value="PENDIENTE">Pendiente</option>
-                          <option value="EN_CAMINO">En camino</option>
-                          <option value="ENTREGADO">Entregado</option>
+                          <option value="">Seleccionar día</option>
+                          {days.map((day) => (
+                            <option key={formatDateISO(day)} value={formatDateISO(day)}>
+                              {formatDateLong(day)}
+                            </option>
+                          ))}
                         </select>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-              <section>
-                <h3 className="mb-3 text-lg font-bold text-agro-800">Labores de campo</h3>
-                {dayTasks.length === 0 ? (
-                  <p className="text-lg text-stone-500">Sin labores registradas.</p>
-                ) : (
-                  <ul className="space-y-2">
-                    {dayTasks.map((t) => (
-                      <li
-                        key={t.id}
-                        className="flex items-start justify-between gap-2 rounded-lg bg-agro-50 p-3 text-lg"
-                      >
-                        <div>
-                          <p className="font-semibold">{t.title}</p>
-                          {t.notes && <p className="text-stone-600">{t.notes}</p>}
-                        </div>
-                        <button
-                          type="button"
-                          className="shrink-0 text-base text-red-800 underline"
-                          onClick={async () => {
-                            await deleteFieldTask(t.id);
-                            router.refresh();
-                          }}
-                        >
-                          Quitar
-                        </button>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </section>
-            </Card>
-          );
-        })}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </Card>
+        </div>
+
+        <Card title="Resumen semanal" subtitle="Actividades programadas y notas para la semana." className="border-agro-300 bg-white/95">
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="rounded-3xl bg-agro-50 p-5 text-center">
+              <p className="text-4xl font-bold text-agro-900">{plannedCount}</p>
+              <p className="mt-2 text-sm uppercase tracking-[0.18em] text-stone-600">Pedidos agendados</p>
+            </div>
+            <div className="rounded-3xl bg-agro-50 p-5 text-center">
+              <p className="text-4xl font-bold text-agro-900">{tasks.length}</p>
+              <p className="mt-2 text-sm uppercase tracking-[0.18em] text-stone-600">Notas creadas</p>
+            </div>
+            <div className="rounded-3xl bg-agro-50 p-5 text-center">
+              <p className="text-4xl font-bold text-agro-900">{todayCount}</p>
+              <p className="mt-2 text-sm uppercase tracking-[0.18em] text-stone-600">Alertas de hoy</p>
+            </div>
+          </div>
+        </Card>
       </div>
 
-      <Card title="Agregar labor de campo" subtitle="Ej.: fumigación, visita a finca, muestreo.">
-        <form action={addTask} className="space-y-4">
-          <Input label="Fecha de la labor" name="date" type="date" required defaultValue={formatDateISO(new Date())} />
-          <Input label="Nombre de la labor" name="title" required placeholder="Ej.: Visita técnica finca La Esperanza" />
-          <Textarea label="Detalles (opcional)" name="notes" />
-          {msg && <p className="text-lg text-agro-800" role="status">{msg}</p>}
-          <Button type="submit">Guardar labor</Button>
+      <section className="space-y-4">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <h3 className="text-2xl font-semibold text-agro-900">Vista de semana</h3>
+            <p className="text-stone-600">Visualiza todas tus entregas y notas organizadas por día.</p>
+          </div>
+          <div className="inline-flex items-center gap-3 rounded-3xl border border-stone-200 bg-white px-4 py-3 text-base text-stone-700 shadow-sm">
+            <span className="font-semibold text-agro-900">Semana</span>
+            <span>{formatDateShort(weekStart)} — {formatDateShort(new Date(weekStart.getTime() + 6 * 86400000))}</span>
+          </div>
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-7">
+          {days.map((day, i) => {
+            const dayOrders = ordersForDay(day);
+            const dayTasks = tasksForDay(day);
+            return (
+              <Card
+                key={formatDateISO(day)}
+                title={`${DAY_SHORT[i]} · ${formatDateShort(day)}`}
+                className="min-h-[320px]"
+              >
+                <div className="space-y-5">
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.2em] text-stone-500">Pedidos</p>
+                    {dayOrders.length === 0 ? (
+                      <p className="mt-3 text-sm text-stone-500">Sin entregas asignadas.</p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {dayOrders.map((order) => (
+                          <li key={order.id} className="rounded-3xl border border-stone-200 bg-stone-50 p-4">
+                            <p className="font-semibold text-stone-900">{order.clientName}</p>
+                            <p className="mt-1 text-sm text-stone-600">{order.product} · {PRIORITY_LABELS[order.priority]}</p>
+                            <select
+                              className="mt-3 w-full rounded-2xl border border-stone-300 bg-white px-3 py-2 text-sm"
+                              value={order.status}
+                              onChange={async (e) => {
+                                await updateOrderStatus(order.id, e.target.value as Order["status"]);
+                                router.refresh();
+                              }}
+                            >
+                              <option value="PENDIENTE">Pendiente</option>
+                              <option value="EN_CAMINO">En camino</option>
+                              <option value="ENTREGADO">Entregado</option>
+                            </select>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                  <div>
+                    <p className="text-sm uppercase tracking-[0.2em] text-stone-500">Notas</p>
+                    {dayTasks.length === 0 ? (
+                      <p className="mt-3 text-sm text-stone-500">Sin notas para este día.</p>
+                    ) : (
+                      <ul className="space-y-3">
+                        {dayTasks.map((task) => (
+                          <li key={task.id} className="rounded-3xl border border-stone-200 bg-white p-4 shadow-sm">
+                            <div className="flex items-start justify-between gap-3">
+                              <div>
+                                <p className="font-semibold text-stone-900">{task.title}</p>
+                                {task.notes && <p className="mt-2 text-sm text-stone-600">{task.notes}</p>}
+                              </div>
+                              <button
+                                type="button"
+                                className="text-sm font-semibold text-red-700 hover:text-red-900"
+                                onClick={async () => {
+                                  await deleteFieldTask(task.id);
+                                  router.refresh();
+                                }}
+                              >
+                                Eliminar
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+              </Card>
+            );
+          })}
+        </div>
+      </section>
+
+      <Card title="Agregar nota rápida" subtitle="Escribe tu nueva actividad o recordatorio para la semana." className="border-agro-300 bg-white/95">
+        <form action={addTask} className="space-y-5">
+          <div className="grid gap-4 lg:grid-cols-3">
+            <Input
+              label="Fecha"
+              name="date"
+              type="date"
+              required
+              defaultValue={formatDateISO(new Date())}
+            />
+            <Input
+              label="Título de la nota"
+              name="title"
+              required
+              placeholder="Ej.: Revisión del cultivo de maíz"
+            />
+          </div>
+          <Textarea
+            label="Detalles (opcional)"
+            name="notes"
+            placeholder="Anota observaciones, insumos, ruta o cliente relacionado."
+          />
+          {message ? (
+            <p className="rounded-3xl bg-agro-50 p-4 text-base text-agro-900" role="status">
+              {message}
+            </p>
+          ) : null}
+          <Button type="submit" fullWidth>
+            Guardar nota
+          </Button>
         </form>
       </Card>
     </div>

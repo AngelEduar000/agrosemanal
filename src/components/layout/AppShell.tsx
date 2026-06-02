@@ -5,9 +5,9 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 
 const NAV = [
+  { href: "/planificador", label: "Calendario" },
   { href: "/pedidos", label: "Pedidos" },
-  { href: "/planificador", label: "Planificador semanal" },
-  { href: "/bitacora", label: "Bitácora diaria" },
+  { href: "/bitacora", label: "Bitácora" },
 ];
 
 export function AppShell({

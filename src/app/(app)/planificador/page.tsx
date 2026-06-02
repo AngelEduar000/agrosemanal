@@ -44,6 +44,7 @@ export default async function PlanificadorPage({
       </header>
 
       <WeeklyPlanner
+        weekKey={weekKey}
         weekStartIso={formatDateISO(weekStartDate)}
         orders={orders}
         tasks={tasks}
