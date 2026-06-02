@@ -1,6 +1,6 @@
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { formatDateShort, getWeekKey, getWeekStartForKey } from "@/lib/dates";
+import { formatDateShort, getWeekKey, getWeekStartForKey, getTodayUTC } from "@/lib/dates";
 import * as XLSX from "xlsx";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -38,11 +38,11 @@ export async function GET(req: NextRequest) {
   let end: Date;
 
   if (range === "month") {
-    const now = new Date();
-    start = new Date(now.getFullYear(), now.getMonth(), 1);
-    end = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+    const today = getTodayUTC();
+    start = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth(), 1));
+    end = new Date(Date.UTC(today.getUTCFullYear(), today.getUTCMonth() + 1, 0));
   } else {
-    const weekKey = weekParam ?? getWeekKey(new Date());
+    const weekKey = weekParam ?? getWeekKey(getTodayUTC());
     start = getWeekStartForKey(weekKey);
     end = new Date(start);
     end.setDate(end.getDate() + 6);

@@ -9,6 +9,7 @@ import {
   formatDateShort,
   getWeekDays,
   parseDateISO,
+  getTodayUTC,
 } from "@/lib/dates";
 import { ActivityEditor } from "@/components/activities/ActivityEditor";
 import { toggleFieldTaskCompleted } from "@/actions/fieldTasks";
@@ -30,7 +31,7 @@ export function ActivityCalendar({
   const router = useRouter();
   const weekStart = parseDateISO(weekStartIso);
   const [viewMode, setViewMode] = useState<ViewMode>("month"); // default to month for rich calendar view!
-  const [selectedDate, setSelectedDate] = useState<string>(formatDateISO(new Date()));
+  const [selectedDate, setSelectedDate] = useState<string>(formatDateISO(getTodayUTC()));
   
   // Modal Editor state
   const [isEditorOpen, setIsEditorOpen] = useState(false);
@@ -78,7 +79,7 @@ export function ActivityCalendar({
   }, [diaryEntries]);
 
   const todayCount = useMemo(() => {
-    const today = new Date();
+    const today = getTodayUTC();
     return tasksForDay(today).filter(t => !t.completed).length;
   }, [tasksForDay]);
 
@@ -206,7 +207,7 @@ export function ActivityCalendar({
             <button
               onClick={() => {
                 setViewMode("day");
-                setSelectedDate(formatDateISO(new Date()));
+                setSelectedDate(formatDateISO(getTodayUTC()));
               }}
               className="text-xs font-bold text-agro-700 dark:text-agro-400 hover:underline transition"
             >
@@ -229,9 +230,9 @@ export function ActivityCalendar({
             {monthDays.map((day) => {
               const dayTasks = tasksForDay(day);
               const diary = diaryForDay(day);
-              const isCurrentMonth = day.getMonth() === weekStart.getMonth();
-              const isToday = new Date().toDateString() === day.toDateString();
+              const isCurrentMonth = day.getUTCMonth() === weekStart.getUTCMonth();
               const iso = formatDateISO(day);
+              const isToday = formatDateISO(getTodayUTC()) === iso;
               const isSelected = selectedDate === iso;
 
               return (
@@ -348,8 +349,8 @@ export function ActivityCalendar({
             {days.map((day, i) => {
               const dayTasks = tasksForDay(day);
               const diary = diaryForDay(day);
-              const isToday = new Date().toDateString() === new Date(day).toDateString();
               const iso = formatDateISO(day);
+              const isToday = formatDateISO(getTodayUTC()) === iso;
               const isSelected = selectedDate === iso;
 
               return (
@@ -447,11 +448,11 @@ export function ActivityCalendar({
         <div className="rounded-[28px] border border-white/60 bg-white/70 p-6 shadow-[0_15px_50px_rgba(45,61,40,0.03)] backdrop-blur-xl dark:border-white/10 dark:bg-stone-900/80 space-y-6">
           <div className="flex items-center justify-between border-b border-stone-200/60 dark:border-stone-800 pb-3">
             <h2 className="text-base font-bold text-stone-900 dark:text-white flex items-center gap-2">
-              <span>🌾</span> Agenda de Labores del Día ({formatDateShort(new Date())})
+              <span>🌾</span> Agenda de Labores del Día ({formatDateShort(getTodayUTC())})
             </h2>
-            {diaryForDay(new Date()) && (
+            {diaryForDay(getTodayUTC()) && (
               <Link
-                href={`/bitacora?fecha=${formatDateISO(new Date())}`}
+                href={`/bitacora?fecha=${formatDateISO(getTodayUTC())}`}
                 className="text-xs font-bold text-agro-700 dark:text-agro-400 bg-agro-50 dark:bg-agro-950/10 px-3 py-1.5 rounded-lg border border-agro-100/50 hover:bg-agro-100 transition flex items-center gap-1.5"
               >
                 📖 Ver Bitácora de Hoy
@@ -461,13 +462,13 @@ export function ActivityCalendar({
 
           <div>
             <p className="text-sm font-semibold text-stone-900 dark:text-white mb-3">Pendientes y completados</p>
-            {tasksForDay(new Date()).length === 0 ? (
+            {tasksForDay(getTodayUTC()).length === 0 ? (
               <p className="text-xs text-stone-500 bg-stone-50/50 dark:bg-stone-950/20 border border-stone-250/50 dark:border-stone-800 p-5 rounded-2xl">
                 No tienes labores asignadas para hoy. ¡Aprovecha a descansar o planifica una labor haciendo clic arriba!
               </p>
             ) : (
               <div className="space-y-2">
-                {tasksForDay(new Date()).map((task) => (
+                {tasksForDay(getTodayUTC()).map((task) => (
                   <div
                     key={task.id}
                     onClick={(e) => openEditModal(task, e)}

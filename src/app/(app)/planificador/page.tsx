@@ -5,6 +5,7 @@ import {
   formatDateISO,
   getWeekKey,
   getWeekStartForKey,
+  getTodayUTC,
 } from "@/lib/dates";
 
 export default async function PlanificadorPage({
@@ -14,7 +15,7 @@ export default async function PlanificadorPage({
 }) {
   await auth();
   const params = await searchParams;
-  const weekKey = params.week ?? getWeekKey(new Date());
+  const weekKey = params.week ?? getWeekKey(getTodayUTC());
   const weekStartDate = getWeekStartForKey(weekKey);
   
   // Calculate a wide date range to cover the entire monthly grid (6 weeks grid)

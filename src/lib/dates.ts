@@ -1,43 +1,51 @@
-/** Utilidades de fechas en zona horaria local (Colombia por defecto en servidor Vercel UTC). */
+/** Utilidades de fechas en zona horaria UTC para evitar desfases de zona horaria local. */
 
 export function startOfDay(d: Date): Date {
   const x = new Date(d);
-  x.setHours(0, 0, 0, 0);
+  x.setUTCHours(0, 0, 0, 0);
   return x;
 }
 
 export function formatDateISO(d: Date): string {
-  const y = d.getFullYear();
-  const m = String(d.getMonth() + 1).padStart(2, "0");
-  const day = String(d.getDate()).padStart(2, "0");
+  const y = d.getUTCFullYear();
+  const m = String(d.getUTCMonth() + 1).padStart(2, "0");
+  const day = String(d.getUTCDate()).padStart(2, "0");
   return `${y}-${m}-${day}`;
 }
 
 export function parseDateISO(iso: string): Date {
   const [y, m, d] = iso.split("-").map(Number);
-  return startOfDay(new Date(y, m - 1, d));
+  return new Date(Date.UTC(y, m - 1, d));
 }
 
-/** Lunes de la semana que contiene la fecha */
+/** Devuelve la fecha actual (hoy) en UTC medianoche respetando el huso horario local */
+export function getTodayUTC(): Date {
+  const now = new Date();
+  return new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));
+}
+
+/** Lunes de la semana que contiene la fecha (en UTC) */
 export function getWeekStart(d: Date): Date {
-  const date = startOfDay(d);
-  const day = date.getDay();
+  const date = new Date(d);
+  date.setUTCHours(0, 0, 0, 0);
+  const day = date.getUTCDay();
   const diff = day === 0 ? -6 : 1 - day;
-  date.setDate(date.getDate() + diff);
+  date.setUTCDate(date.getUTCDate() + diff);
   return date;
 }
 
 export function getWeekEnd(weekStart: Date): Date {
   const end = new Date(weekStart);
-  end.setDate(end.getDate() + 6);
+  end.setUTCDate(end.getUTCDate() + 6);
+  end.setUTCHours(23, 59, 59, 999);
   return end;
 }
 
-/** Identificador de semana: 2025-W22 */
+/** Identificador de semana: 2025-W22 (calculado en UTC) */
 export function getWeekKey(d: Date): string {
   const start = getWeekStart(d);
-  const year = start.getFullYear();
-  const jan1 = new Date(year, 0, 1);
+  const year = start.getUTCFullYear();
+  const jan1 = new Date(Date.UTC(year, 0, 1));
   const weekNum = Math.ceil(
     ((start.getTime() - getWeekStart(jan1).getTime()) / 86400000 + 1) / 7
   );
@@ -47,8 +55,9 @@ export function getWeekKey(d: Date): string {
 export function getWeekDays(weekStart: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => {
     const day = new Date(weekStart);
-    day.setDate(day.getDate() + i);
-    return startOfDay(day);
+    day.setUTCDate(day.getUTCDate() + i);
+    day.setUTCHours(0, 0, 0, 0);
+    return day;
   });
 }
 
@@ -78,11 +87,11 @@ const MONTH_NAMES = [
 ];
 
 export function formatDateLong(d: Date): string {
-  return `${DAY_NAMES[d.getDay()]}, ${d.getDate()} de ${MONTH_NAMES[d.getMonth()]} de ${d.getFullYear()}`;
+  return `${DAY_NAMES[d.getUTCDay()]}, ${d.getUTCDate()} de ${MONTH_NAMES[d.getUTCMonth()]} de ${d.getUTCFullYear()}`;
 }
 
 export function formatDateShort(d: Date): string {
-  return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+  return `${d.getUTCDate()}/${d.getUTCMonth() + 1}/${d.getUTCFullYear()}`;
 }
 
 export function formatWeekRange(weekStart: Date): string {
@@ -90,13 +99,13 @@ export function formatWeekRange(weekStart: Date): string {
   return `${formatDateShort(weekStart)} — ${formatDateShort(end)}`;
 }
 
-/** Inicio de semana (lunes) para un identificador weekKey (ej. 2026-W22). */
-export function getWeekStartForKey(weekKey: string, reference = new Date()): Date {
+/** Inicio de semana (lunes) para un identificador weekKey (en UTC). */
+export function getWeekStartForKey(weekKey: string, reference = getTodayUTC()): Date {
   const currentStart = getWeekStart(reference);
   if (weekKey === getWeekKey(reference)) return currentStart;
 
   const prev = new Date(currentStart);
-  prev.setDate(prev.getDate() - 7);
+  prev.setUTCDate(prev.getUTCDate() - 7);
   if (weekKey === getWeekKey(prev)) return prev;
 
   return currentStart;
